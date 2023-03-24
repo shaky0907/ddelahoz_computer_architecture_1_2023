@@ -32,14 +32,14 @@ def fileReader(path):
 
 
 def main():
-    llaves = "1531" + " " + "2747" + " "
+    llaves = " 1531" + " " + "2747" + " "
 
     file = open("llaves.txt", "w")
     file.write(llaves)
     file.close()
 
 
-    os.system('nasm -f elf64 -o RSA.o test.asm')
+    os.system('nasm -f elf64 -o RSA.o RSA.asm')
     os.system('ld -o RSA RSA.o')
     subprocess.call(['./RSA'])
 

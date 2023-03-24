@@ -71,13 +71,11 @@ init:
 
 readkey:
 
-    cmp r9,2 ; revisar si ya conto los 2 parametros de la llave
+    cmp r9,3 ; revisar si ya conto los 2 parametros de la llave
     je stopRkey ;terminar el loop
 
     cmp byte [keybuff + rdi],' ' ; comprarar con el caracter espacio
     je skipEsp ;saltar el espacio
-
-    cmp r9,0
 
     movzx rcx, byte [keybuff + rdi] ; almacenar el caracter
 
@@ -93,18 +91,20 @@ readkey:
 
 
 skipEsp:
-
     add r9,1 ; signifca que leyo un parametro de la llave
 
-    cmp r9,1 ; revisar cuantos numeros ha leido cant = 1
+    cmp r9,2 ; revisar cuantos numeros ha leido cant = 1
     je storeD ;guardar el valor de D para uso futuro
 
-    cmp r9,2 ; revisar cuantos numeros ha leido cant = 2
+    cmp r9,3 ; revisar cuantos numeros ha leido cant = 2
     je storeN ;ir a guardar el valor de N para uso futuro
+
+
 
 
 storeD:
     mov [d],rax  ;guardar d
+
     mov r10,[d]
     xor rax,rax ; reset rax
     add rdi,1   ; continuar al siguiente caracter
@@ -126,7 +126,6 @@ stopRkey:
     mov r9, 0
     call printn
     jmp done
-
 
 done:
     mov rax, 1      ; System call number for exit
