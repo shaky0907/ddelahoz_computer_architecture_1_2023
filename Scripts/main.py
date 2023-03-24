@@ -39,7 +39,7 @@ def main():
     file.close()
 
 
-    os.system('nasm -f elf64 -o RSA.o RSA.asm')
+    os.system('nasm -f elf64 -o RSA.o test.asm')
     os.system('ld -o RSA RSA.o')
     subprocess.call(['./RSA'])
 
@@ -67,14 +67,20 @@ def main():
     window.title('RSA')
     # add widgets here
 
-    frame = Frame(window, width=600, height=400)
+    frame = Frame(window, width=1600, height=400)
     frame.pack()
     frame.place(anchor='center', relx=0.5, rely=0.5)
     img = ImageTk.PhotoImage(Image.open("Encrypted.png"))
 
+
+    img2 = ImageTk.PhotoImage(Image.open("Decrypted.png"))
+
     # Create a Label Widget to display the text or Image
     label = Label(frame, image=img)
     label.pack()
+
+    label2 = Label(frame, image=img2)
+    label2.pack()
 
 
 
