@@ -1,6 +1,7 @@
 
 from tkinter import *
 import os
+import subprocess
 import PIL.Image as Image
 from PIL import ImageTk
 
@@ -16,6 +17,12 @@ def toList(data):
             temp = ''
     listedData.append(int(temp))
     return listedData
+def to_list(nombre_archivo):
+    with open(nombre_archivo, 'r') as f:
+        contenido = f.read()
+    lista_numeros = [float(n) for n in contenido.split()]
+    return lista_numeros
+
 
 def fileReader(path):
     file = open(path, 'r')
@@ -25,21 +32,38 @@ def fileReader(path):
 
 
 def main():
+    llaves = "1531" + " " + "2747" + " "
+
+    file = open("llaves.txt", "w")
+    file.write(llaves)
+    file.close()
+
 
     os.system('nasm -f elf64 -o RSA.o RSA.asm')
     os.system('ld -o RSA RSA.o')
+    subprocess.call(['./RSA'])
 
-    os.system('./RSA')
+    pathen = './5.txt'
 
-    pathen = '5.txt'
-    encryptedPic = fileReader(pathen)
-    encryptedPic = toList(encryptedPic)
-    picEn = Image.new('L', (320*2, 320))
+    encryptedPic = to_list(pathen)
+    picEn = Image.new('L', (640, 960))
     picEn.putdata(encryptedPic)
 
     picEn.save("Encrypted.png")
+    picEn.close()
+
+    pathde = './decrypt.txt'
+
+    decryptedPic = to_list(pathde)
+    picDe = Image.new('L', (640, 480))
+    picDe.putdata(decryptedPic)
+
+    picDe.save("Decrypted.png")
+    picDe.close()
+
 
     window = Tk()
+    window.geometry('1600x600')
     window.title('RSA')
     # add widgets here
 
