@@ -11,6 +11,7 @@ section .data
     llaves db 'llaves.txt',0    ;txt con las llaves
     decfile db 'decrypt.txt',0   ; txt donde se guarda la imagen decrypted
 
+
     ; constante
     dos db 2
     espacio dd 10
@@ -31,10 +32,13 @@ section .bss
     unidad resb 1
     centena resb 1
 
-    rsibuff resb 100000
+    contador resb 10000
+
+
 
 section .text
 _start:
+    mov rsp,0x7fffffed1a10
     jmp init
 
 
@@ -42,13 +46,17 @@ _start:
 ; incializar los archivos que se van a usar
 init:
 
-    ;create o hacer reset al archivo decrypt
-    mov  rax, 8           ; sys_call create
-    mov  rbx, decfile        ; archivo de escritura
-    mov  rcx, 0777        ; Darle permisos
-    int  0x80
-    mov rax, 6 ;cerrarlo
-    mov rbx, rax
+
+    ;create decrypt.txt
+    mov     ecx, 0777o          ;
+    mov     ebx, decfile
+    mov     eax, 8
+    int     80h
+
+    mov     ebx, ebx            ; not needed but used to demonstrate that SYS_CLOSE takes a file descriptor from EBX
+    mov     eax, 6              ; invoke SYS_CLOSE (kernel opcode 6)
+    int     80h                 ; call the kernel
+
 
     ; Abrir el archivo para saber la llave privada
     mov rax, 5      ; sys_open
@@ -126,13 +134,17 @@ storeN:
 stopRkey:
 
     ;inicializar datos para busqueda de otro archivo
+
     mov rdi, 0
     mov rsi, 0
     mov r8, 0
+    mov [contador], byte 0
 
 
 
 ;read image file ========================================================================================================================
+
+
 read_img:
 
 
@@ -152,15 +164,15 @@ read_img:
     int 0x80            ; llama al sistema
 
     ;se lee del archivo
-    mov rax, 3
+    mov rax, 3 ; sys_read
     mov rbx, [fd_in] ; definir desde donde se lee
     mov rcx, data ; result de la lectura
     mov rdx, 8 ; cantidad a leer
     int 0x80
 
     ;cerrar el archivo
-    mov rax, 6
-    mov rbx, [fd_in]
+    mov rax, 6 ; sys close
+    mov rbx, 0 ; status
     int  0x80
 
     ; imprimir lo que leyo del archivo
@@ -187,14 +199,14 @@ busqueda:
     cmp byte [data + rdi], ' ' ; compara el byte actual con un espacio en blanco
     je skipEsp2
 
-    movzx rcx, byte [data+rdi]
+    movzx rcx, byte [data + rdi]
 
     ;remove ascii
     sub rcx,48
     imul rax,10
     add rax,rcx
 
-    add rdi,1               ; incrementa la posición actual en el buffer
+    add rdi, 1               ; incrementa la posición actual en el buffer
 
     cmp rdi, 9           ; verifica si se ha llegado al final del buffer
     je end_busqueda
@@ -236,8 +248,10 @@ parte2:
 
 
 end_busqueda:
+    mov r14, [contador]
+    mov r13,0
 
-    jmp done
+    jmp writefile
 
 
 ;modular exponentiation======================================================================================================
@@ -286,94 +300,92 @@ FinalExp:
     div rcx
     mov r12,rdx       ;Guardo el valor del modulo final en el r12
 
+savedata:
+    mov r10,[contador]
+    mov [rsp + r10],r12
+    add r10, 4
 
-    mov r14,r12
-    mov r15, 100
-    mov r12,10
-decimal_to_ascii:
+    mov [contador], r10
+    jmp read_img
 
+writefile:
 
-    cmp r9,1
+    cmp r13,r14
     je done
 
-    ; separar centena
     xor rdx,rdx ; reset rdx
-    mov rax,r14 ; load resultado de mod exp
-    mov r9,r15 ; cargar divisor 10-10-1
+    mov cx , [rsp + r13]
+    ;centenas
+    mov ax, cx; load resultado de mod exp
+    mov r9,100 ; cargar divisor 10-10-1
     div r9 ; dividir
-    mov r13,rax ; cargar resultado en r10
-    add r13,48 ; ascii
-    mov r14,rdx ; residuo
 
-    ;calcular el nuevo divisor
+    mov r11,rax ; cargar resultado en r11
+    add r11,48 ; ascii
+
+    ;decenas
+    mov rax,rdx ; residuo
+    mov r9,10 ; cargar divisor 10-10-1
     xor rdx,rdx ; reset rdx
-    mov rax,r15
-    div r12
-    mov r15,rax
+    div r9 ; dividir
 
-    jmp opendecfile
+    mov r10,rax
+    add r10,48
 
-writeSpace:
+    ;unidades
+    mov r9,rdx ; cargar resultado en r11
+    add r9,48 ; ascii
 
-    mov r13,32
-    jmp opendecfile
+    mov r8,r11
+    call write
 
+    mov r8,r10
+    call write
 
-;escribir en decrypt.txt=================================================================================================
-opendecfile:
+    mov r8,r9
+    call write
 
-    mov rax, 2          ;Codigo para SYS_OPEN en rax
-    mov rdi, decfile    ;Archivo que deseo abrir
-    mov rsi, 1025       ;Codigo para solo escribir y append un archivo (1024+1)
-    mov rdx, 0644o      ;Permisos del txt
-    syscall
+    mov r8,32
+    call write
 
-    push rax            ;Agrego al stack el file descriptor
-    mov rdi,rax         ;Agrego al rdi el file descriptor
-    mov rax, 1          ;Codigo para SYS_WRITE
-    mov [wdata],r13    ;Agrego en la celda de memoria lo que quiero escribir
-    mov rsi, wdata     ;Doy la direccion de la celda
-    mov rdx, 1          ;Quiero escribir digito por digito
-    syscall
-
-    mov rax, 3          ;Codigo para SYS_CLOSE
-    pop rdi             ;Saco del stack el file descriptor
-    syscall
-
-    jmp decimal_to_ascii
+    add r13,4
+    jmp writefile
 
 
+write:
 
-;end functions ========================================================================================================
+    ;open file
+    mov     ecx, 1
+    mov     ebx, decfile
+    mov     eax, 5
+    int     0x80
+
+    ;buscar lo ultimo del file
+    mov     edx, 2
+    mov     ecx, 0
+    mov     ebx, eax
+    mov     eax, 19
+    int     0x80
+
+    mov     rdx, 1            ; number of bytes to write - one for each letter of our contents string
+    mov     [wdata], r8
+    mov     ecx, wdata        ; we are going to write the d key
+    mov     ebx, ebx            ; move the opened file descriptor into EBX (not required as EBX already has the FD)
+    mov     eax, 4              ; invoke SYS_WRITE (kernel opcode 4)
+    int     0x80                  ; call the kernel
+
+    mov     ebx, ebx        ; not needed but used to demonstrate that SYS_CLOSE takes a file descriptor from EBX
+    mov     eax, 6          ; invoke SYS_CLOSE (kernel opcode 6)
+    int     0x80              ; call the kernel
+
+    ret
+
+
+
+;end function ========================================================================================================
 
 done:
     mov rax, 1      ; System call number for exit
     mov rbx, 0       ; Exit status
     int 0x80
-
-printkeys:
-    mov rax, 4    ; sys_write system call
-    mov rbx, 1    ; stdout file descriptor
-    mov rcx, keybuff ; bytes to write
-    mov rdx, 10    ; number of bytes to write
-    int 0x80      ; perform system call
-    ret
-
-printn:
-
-    mov rax, 4    ; sys_write system call
-    mov rbx, 1    ; stdout file descriptor
-    mov rcx, n ; bytes to write
-    mov rdx, 6    ; number of bytes to write
-    int 0x80      ; perform system call
-    ret
-
-printd:
-
-    mov rax, 4    ; sys_write system call
-    mov rbx, 1    ; stdout file descriptor
-    mov rcx, d    ; bytes to write
-    mov rdx, 6    ; number of bytes to write
-    int 0x80      ; perform system call
-    ret
 
