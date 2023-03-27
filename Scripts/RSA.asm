@@ -176,17 +176,17 @@ read_img:
     int  0x80
 
     ; imprimir lo que leyo del archivo
-    mov rax, 4
-    mov rbx, 1
-    mov rcx, data
-    mov rdx, 8
-    int 0x80
+    ;mov rax, 4
+    ;mov rbx, 1
+    ;mov rcx, data
+    ;mov rdx, 8
+    ;int 0x80
     ; imprimir lo que leyo del archivo
-    mov rax, 4
-    mov rbx, 1
-    mov rcx, espacio
-    mov rdx, 1
-    int 0x80
+    ;mov rax, 4
+    ;mov rbx, 1
+    ;mov rcx, espacio
+    ;mov rdx, 1
+    ;int 0x80
 
     xor rax,rax
 
