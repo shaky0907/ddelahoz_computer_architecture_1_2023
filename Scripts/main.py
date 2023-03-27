@@ -6,29 +6,12 @@ import PIL.Image as Image
 from PIL import ImageTk
 
 
-def toList(data):
-    listedData = []
-    temp = ''
-    for i in data:
-        if i != ' ':
-            temp += i
-        else:
-            listedData.append(int(temp))
-            temp = ''
-    listedData.append(int(temp))
-    return listedData
+
 def to_list(nombre_archivo):
     with open(nombre_archivo, 'r') as f:
         contenido = f.read()
     lista_numeros = [float(n) for n in contenido.split()]
     return lista_numeros
-
-
-def fileReader(path):
-    file = open(path, 'r')
-    data = file.read()
-    file.close()
-    return data
 
 
 def main():
@@ -38,16 +21,18 @@ def main():
     file.write(llaves)
     file.close()
 
-    file_object = open('5.txt', 'a')
+
+    #file_object = open('5.txt', 'a')
     # Append 'hello' at the end of file
-    file_object.write(' ')
+    #file_object.write(' ')
     # Close the file
-    file_object.close()
+    #file_object.close()
 
 
     os.system('nasm -f elf64 -o RSA.o RSA.asm')
     os.system('ld -o RSA RSA.o')
     os.system('gdb RSA')
+
 
 
 
@@ -63,7 +48,7 @@ def main():
     pathde = './decrypt.txt'
 
     decryptedPic = to_list(pathde)
-    picDe = Image.new('L', (640, 480))
+    picDe = Image.new('L', (640, 481))
     picDe.putdata(decryptedPic)
 
     picDe.save("Decrypted.png")
