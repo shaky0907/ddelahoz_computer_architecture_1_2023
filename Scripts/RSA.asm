@@ -3,6 +3,8 @@ global _start
 
 section .data
     keybuff db 50,0                 ; buffer para leer las llaves
+    decnum db '0000' ,0           ; Buffer para almacenar valor decodificado
+    deciN db 00000 , 0          ; Buffer para almacenar el numero decimal codificado
 
 
     pdata db 'Hola',0
@@ -22,10 +24,9 @@ section .bss
     data resb 8 ;buffer para el archivo encryptado
     d resb 4  ; buffer para d
     n resb 4  ; buffer para n
-
-    n1 resb 3 ; almacenar n1
-    n2 resb 3 ; almacenar n2
-
+    n1 resb 8 ; almacenar n1
+    n2 resb 8 ; almacenar n2
+    n3 resb 8 ; union de n1 con n2
 
 section .text
 _start:
@@ -103,19 +104,18 @@ skipEsp:
 
 storeD:
     mov [d],rax  ;guardar d
-
-    mov r10,[d]
     xor rax,rax ; reset rax
     add rdi,1   ; continuar al siguiente caracter
-
+    mov r14, [d]
     jmp readkey
 
 storeN:
 
     mov [n],rax  ;guardar n
-    mov r11,[n]
     xor rax,rax ;reset rax
     add rdi,1   ;incrementar cantidad de numeros leidos
+    mov r15,[n]
+
     jmp readkey
 
 stopRkey:
@@ -164,22 +164,26 @@ read_img:
     mov rdx, 8
     int 0x80
 
-    jmp done
-
+    xor rax,rax
 
 
 busqueda:
 
-    cmp byte [data+rdi], 0 ; verifica si el buffer está vacío
+    cmp byte [data + rdi], 0 ; verifica si el buffer está vacío
     je end_busqueda
 
-    cmp byte [data+rdi], ' ' ; compara el byte actual con un espacio en blanco
+    cmp byte [data + rdi], ' ' ; compara el byte actual con un espacio en blanco
     je skipEsp2
 
     movzx rcx, byte [data+rdi]
+
+    ;remove ascii
     sub rcx,48
+
     imul rax,10
     add rax,rcx
+
+
     add rdi,1               ; incrementa la posición actual en el buffer
 
     cmp rdi, 9           ; verifica si se ha llegado al final del buffer
@@ -187,9 +191,10 @@ busqueda:
     jmp busqueda
 
 skipEsp2:
+
     add rdi,1
     cmp r8,0
-    ;add edi,1
+
     cmp r8,0
     je parte1
 
@@ -199,18 +204,28 @@ skipEsp2:
 
 parte1:
     add r8,1
+    mov [n1],rax ; guardad n1
+    xor rax,rax ; reset del rax
     jmp busqueda
 
 parte2:
-    add rsi,rdi
-
-    xor rdi, rdi  ;reseteo del contador de bits para saber cuando se encuentra un espacio en blanco
-
+    add rsi,rdi ; update el puntero al buffer actual
+    xor rdi, rdi ;reseteo del contador de bits para saber cuando se encuentra un espacio en blanco
+    mov [n2],rax ; guardar n2
     mov r8,0  ;Resetear el contador de numeros
 
+    mov r10,[n1] ;obtener n1
+    mov r11,[n2] ;obtener n2
+    shl r10,8 ; ajustar n1
+    add r10,r11 ; uniros
+    mov [n3], r10 ;guardar n3
+    mov [d], r14
+    mov [n], r15
+
+    mov r10,[d]
 
 
-    jmp read_img
+    jmp  initModExp
 
 
 end_busqueda:
@@ -218,26 +233,14 @@ end_busqueda:
     jmp done
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ;modular exponentiation======================================================================================================
 
 initModExp:
-    mov r9, 539     ;base
-    mov r10, 1531  ;exponente
-    mov r11, 2747   ;modulo
+    mov r9, [n3]   ;base
+    mov r10, [d]  ;exponente
+    mov r11, [n]   ;modulo
+
+    jmp done
     mov r12, 1      ;Respuesta final
     mov r13, 1      ;Registro temporal
 
@@ -249,10 +252,10 @@ initModExp:
     mov r13,rdx     ;Guarda el modulo de la primera iteracion
 
 Modexp:
-    mov r14,r10     ;muevo el exponente a un registro tempral
-    and r14, 1      ;Aislo el primer bit que dira si el numero es par o impar
-    cmp r14, 1      ;Revision de imparidad
-    jne even        ;Si no es par debe saltarse los siguientes pasos
+    mov r14,r10     ;mover exp a reg temporal
+    and r14, 1      ;revision de par o impar
+    cmp r14, 1
+    jne even        ;si es par
 
     mov rax,r13
     mul r12         ;Registro en la respuesta el valor del modulo actual ya que debe aportar al ser impar
@@ -276,7 +279,7 @@ FinalExp:
     mov rax,r12       ;Preparar para encontrar el modulo final a la respuesta
     div rcx
     mov r12,rdx       ;Guardo el valor del modulo final en el r12
-
+    jmp done
 
 
 
