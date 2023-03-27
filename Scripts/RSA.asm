@@ -6,8 +6,7 @@ section .data
     decnum db '0000' ,0           ; Buffer para almacenar valor decodificado
     deciN db 00000 , 0          ; Buffer para almacenar el numero decimal codificado
 
-
-    pdata db 'Hola',0
+    wdata db '0',0
     imagef db '5.txt',0     ; txt con la imagen encryptada
     llaves db 'llaves.txt',0    ;txt con las llaves
     decfile db 'decrypt.txt',0   ; txt donde se guarda la imagen decrypted
@@ -22,11 +21,17 @@ section .bss
     fd_in  resb 1   ; descriptor de archivos
     fd resd 1       ; descriptor de archivo
     data resb 8 ;buffer para el archivo encryptado
-    d resb 4  ; buffer para d
-    n resb 4  ; buffer para n
+    d resb 8  ; buffer para d
+    n resb 8  ; buffer para n
     n1 resb 8 ; almacenar n1
     n2 resb 8 ; almacenar n2
     n3 resb 8 ; union de n1 con n2
+
+    decena resb 1
+    unidad resb 1
+    centena resb 1
+
+    rsibuff resb 100000
 
 section .text
 _start:
@@ -130,6 +135,7 @@ stopRkey:
 ;read image file ========================================================================================================================
 read_img:
 
+
     ;abrir el archivo de la imagen
     mov rax, 5
     mov rbx, imagef
@@ -163,6 +169,12 @@ read_img:
     mov rcx, data
     mov rdx, 8
     int 0x80
+    ; imprimir lo que leyo del archivo
+    mov rax, 4
+    mov rbx, 1
+    mov rcx, espacio
+    mov rdx, 1
+    int 0x80
 
     xor rax,rax
 
@@ -179,10 +191,8 @@ busqueda:
 
     ;remove ascii
     sub rcx,48
-
     imul rax,10
     add rax,rcx
-
 
     add rdi,1               ; incrementa la posición actual en el buffer
 
@@ -193,7 +203,6 @@ busqueda:
 skipEsp2:
 
     add rdi,1
-    cmp r8,0
 
     cmp r8,0
     je parte1
@@ -211,21 +220,19 @@ parte1:
 parte2:
     add rsi,rdi ; update el puntero al buffer actual
     xor rdi, rdi ;reseteo del contador de bits para saber cuando se encuentra un espacio en blanco
-    mov [n2],rax ; guardar n2
     mov r8,0  ;Resetear el contador de numeros
+
+    mov [n2],rax ; guardar n2
 
     mov r10,[n1] ;obtener n1
     mov r11,[n2] ;obtener n2
     shl r10,8 ; ajustar n1
     add r10,r11 ; uniros
     mov [n3], r10 ;guardar n3
-    mov [d], r14
-    mov [n], r15
-
-    mov r10,[d]
-
 
     jmp  initModExp
+
+
 
 
 end_busqueda:
@@ -240,7 +247,6 @@ initModExp:
     mov r10, [d]  ;exponente
     mov r11, [n]   ;modulo
 
-    jmp done
     mov r12, 1      ;Respuesta final
     mov r13, 1      ;Registro temporal
 
@@ -279,8 +285,62 @@ FinalExp:
     mov rax,r12       ;Preparar para encontrar el modulo final a la respuesta
     div rcx
     mov r12,rdx       ;Guardo el valor del modulo final en el r12
-    jmp done
 
+
+    mov r14,r12
+    mov r15, 100
+    mov r12,10
+decimal_to_ascii:
+
+
+    cmp r9,1
+    je done
+
+    ; separar centena
+    xor rdx,rdx ; reset rdx
+    mov rax,r14 ; load resultado de mod exp
+    mov r9,r15 ; cargar divisor 10-10-1
+    div r9 ; dividir
+    mov r13,rax ; cargar resultado en r10
+    add r13,48 ; ascii
+    mov r14,rdx ; residuo
+
+    ;calcular el nuevo divisor
+    xor rdx,rdx ; reset rdx
+    mov rax,r15
+    div r12
+    mov r15,rax
+
+    jmp opendecfile
+
+writeSpace:
+
+    mov r13,32
+    jmp opendecfile
+
+
+;escribir en decrypt.txt=================================================================================================
+opendecfile:
+
+    mov rax, 2          ;Codigo para SYS_OPEN en rax
+    mov rdi, decfile    ;Archivo que deseo abrir
+    mov rsi, 1025       ;Codigo para solo escribir y append un archivo (1024+1)
+    mov rdx, 0644o      ;Permisos del txt
+    syscall
+
+    push rax            ;Agrego al stack el file descriptor
+    mov rdi,rax         ;Agrego al rdi el file descriptor
+    mov rax, 1          ;Codigo para SYS_WRITE
+    mov [wdata],r13    ;Agrego en la celda de memoria lo que quiero escribir
+    mov rsi, wdata     ;Doy la direccion de la celda
+    mov rdx, 1          ;Quiero escribir digito por digito
+    syscall
+
+    mov rax, 3          ;Codigo para SYS_CLOSE
+    pop rdi             ;Saco del stack el file descriptor
+    syscall
+
+    jmp decimal_to_ascii
 
 
 
