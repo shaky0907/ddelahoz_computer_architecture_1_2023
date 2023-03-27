@@ -271,11 +271,11 @@ initModExp:
     div rcx         ;Division para obtener el modulo
     mov r13,rdx     ;Guarda el modulo de la primera iteracion
 
-Modexp:
+modexp:
     mov r14,r10     ;mover exp a reg temporal
     and r14, 1      ;revision de par o impar
     cmp r14, 1
-    jne even        ;si es par
+    jne par        ;si es par
 
     mov rax,r13
     mul r12         ;Registro en la respuesta el valor del modulo actual ya que debe aportar al ser impar
@@ -284,7 +284,7 @@ Modexp:
     mov r12, rdx    ;Respuesta al regustro 12
 
 
-even:
+par:
     shr r10,1       ;Divido el exponente a la mitad
     xor rdx,rdx     ;limpio rdx
     mov rax,r13
@@ -292,9 +292,9 @@ even:
     div rcx         ;Guardo el siguiente valor del modulo
     mov r13,rdx
     cmp r10,0       ;Reviso si el exponente es 0 despues de su division
-    jne Modexp      ;Repito en caso de que no sea
+    jne modexp      ;Repito en caso de que no sea
 
-FinalExp:
+EndExp:
     xor rdx,rdx       ;limpio el regusto rdx
     mov rax,r12       ;Preparar para encontrar el modulo final a la respuesta
     div rcx
