@@ -2,4 +2,4 @@
 # this file will be overwritten by the project setup script
 SIMICS_BASE_PACKAGE="/home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166"
 export SIMICS_BASE_PACKAGE
-exec "/home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166/bin/documentation" --project "/home/david/Downloads/academia-collaboration-master/simics-project" "$@"
+exec "/home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166/bin/documentation" --project "/home/david/Documents/GitHub/ddelahoz_computer_architecture_1_2023/academia-collaboration-master/simics-project" "$@"

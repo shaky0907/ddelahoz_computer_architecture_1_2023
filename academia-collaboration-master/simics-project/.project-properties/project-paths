@@ -1,4 +1,4 @@
-project: /home/david/Downloads/academia-collaboration-master/simics-project
+project: /home/david/Documents/GitHub/ddelahoz_computer_architecture_1_2023/academia-collaboration-master/simics-project
 simics-root: /home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166
 simics-model-builder: /home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166
 mingw: None

@@ -1,5 +1,5 @@
 tomasulo.d tomasulo.o: \
- /home/david/Downloads/academia-collaboration-master/simics-project/modules/tomasulo/tomasulo.c \
+ /home/david/Documents/GitHub/ddelahoz_computer_architecture_1_2023/academia-collaboration-master/simics-project/modules/tomasulo/tomasulo.c \
  /usr/include/stdc-predef.h \
  /home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166/src/include/simics/simulator/conf-object.h \
  /home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166/src/include/simics/base/types.h \
