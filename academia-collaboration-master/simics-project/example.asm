@@ -1,8 +1,9 @@
 ORG 0x0           ; add to offsets
 
 start:
-    mov eax, 3
-    mov ebx, 6
-    add ebx,eax
-    add eax,ebx
+    mov ax, 3
+    mov bx, 6
+    add bx, ax
+    add ax, bx
+    mul bx
     

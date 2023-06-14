@@ -32,8 +32,8 @@
 #define SUM_TIMEOUT 1
 #define MUL_TIMEOUT 4
 #define DIV_TIMEOUT 20
-#define ALL_TIMEOUT 5
-#define Tomasulo 0
+#define ALL_TIMEOUT 20
+#define Tomasulo 1
 
 conf_class_t *connection_class;
 
@@ -52,6 +52,8 @@ typedef struct {
     int current_timeout;
     instruction_entry * curr_inst;
     bool in_use;
+    char * DestReg;
+    int risk_timeout;
     //you add more
     int type;
 } unit_functional_station;
@@ -271,6 +273,22 @@ void identify_instruction_and_operand(conf_object_t * obj, conf_object_t * cpu, 
                 conn->stations[i]->current_timeout = LOAD_TIMEOUT; //we set the TIMEOUT to restart the instruction that just entered our station
                 available_station_load = true; 
                 conn->skip_instruction = true; //is already in a station, do not execute yet
+
+                char* destReg = entry->disassembled_text + 4; //saves the destination register each station is
+                conn->stations[i]->DestReg = destReg;
+
+
+                int Risk_timeout = 0;
+                for(int j = 0; j < conn->total_reservation_stations; ++j){
+                    if(conn->stations[j]->in_use && strncmp(conn->stations[j]->DestReg,entry->disassembled_text + 7, 2) == 0){
+
+                        if(Risk_timeout < conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout){
+                            Risk_timeout = conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout;
+                        }
+                    }
+                }
+                conn->stations[i]->risk_timeout=Risk_timeout;
+
                 break;
                 }
             }
@@ -283,6 +301,21 @@ void identify_instruction_and_operand(conf_object_t * obj, conf_object_t * cpu, 
                     conn->stations[i]->current_timeout = SUM_TIMEOUT;
                     available_station_sum = true;
                     conn->skip_instruction = true; //is already in a station, do not execute yet
+
+                    char* destReg = entry->disassembled_text + 4; //saves the destination register each station is
+                    conn->stations[i]->DestReg = destReg;
+
+                    int Risk_timeout = 0;
+                    for(int j = 0; j < conn->total_reservation_stations; ++j){
+                        if(conn->stations[j]->in_use && strncmp(conn->stations[j]->DestReg,entry->disassembled_text + 7, 2) == 0){
+
+                            if(Risk_timeout < conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout){
+                                Risk_timeout = conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout;
+                            }
+                        }
+                    }
+                    conn->stations[i]->risk_timeout = Risk_timeout;
+
                     break;
                 }
             }
@@ -295,6 +328,21 @@ void identify_instruction_and_operand(conf_object_t * obj, conf_object_t * cpu, 
                     conn->stations[i]->current_timeout = MUL_TIMEOUT;
                     available_station_mul = true;
                     conn->skip_instruction = true; //is already in a station, do not execute yet
+
+                    char* destReg = entry->disassembled_text + 4; //saves the destination register each station is
+                    conn->stations[i]->DestReg = destReg;
+                   
+                    int Risk_timeout = 0;
+                    for(int j = 0; j < conn->total_reservation_stations; ++j){
+                        if(conn->stations[j]->in_use &&  (strncmp(conn->stations[j]->DestReg,"ax", 2) == 0 || strncmp(conn->stations[j]->DestReg,entry->disassembled_text + 7, 2) == 0)){
+
+                            if(Risk_timeout < conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout){
+                                Risk_timeout = conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout;
+                            }
+                            
+                        }
+                    }
+                    conn->stations[i]->risk_timeout=Risk_timeout;
                     break;
                 }
             }
@@ -308,6 +356,22 @@ void identify_instruction_and_operand(conf_object_t * obj, conf_object_t * cpu, 
                     conn->stations[i]->current_timeout = DIV_TIMEOUT;
                     available_station_div = true;
                     conn->skip_instruction = true; //is already in a station, do not execute yet
+
+                    char* destReg = entry->disassembled_text + 4; //saves the destination register each station is
+                    conn->stations[i]->DestReg = destReg;
+
+                    int Risk_timeout = 0;
+                    for(int j = 0; j < conn->total_reservation_stations; ++j){
+                        if(conn->stations[j]->in_use &&  (strncmp(conn->stations[j]->DestReg,"ax", 2) == 0 || strncmp(conn->stations[j]->DestReg,entry->disassembled_text + 7, 2) == 0)){
+
+                            if(Risk_timeout < conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout){
+                                Risk_timeout = conn->stations[j]->current_timeout + conn->stations[j]->risk_timeout;
+                            }
+                            
+                        }
+                    }
+                    conn->stations[i]->risk_timeout=Risk_timeout;
+
                     break;
                 }
             }
@@ -339,28 +403,43 @@ void identify_instruction_and_operand(conf_object_t * obj, conf_object_t * cpu, 
 void station_timers(conf_object_t * obj){
     connection_t *conn = conn_of_obj(obj);
     conf_object_t * cpu = conn->provider;
+
     for(int i = 0; i < conn->total_reservation_stations; ++i){
         if(conn->stations[i]->in_use && conn->stations[i]->current_timeout > 0) {
-            --conn->stations[i]->current_timeout;
-            if(conn->stations[i]->type==0){
-                SIM_LOG_INFO(1, obj, 0, "Station LOAD decremented timeout to %x , %i, %x\n", conn->stations[i]->current_timeout,i,conn->stations[i]->curr_inst);
-               
-            } else if(conn->stations[i]->type==1){
-                SIM_LOG_INFO(1, obj, 0, "Station SUM decremented timeout to %x , %i, %x\n", conn->stations[i]->current_timeout,i,conn->stations[i]->curr_inst);
+
+            if(conn->stations[i]->risk_timeout == 0){
+                --conn->stations[i]->current_timeout;
+                if(conn->stations[i]->type==0){
+                    SIM_LOG_INFO(1, obj, 0, "Station LOAD decremented timeout to %x , %s ,%s \n", conn->stations[i]->current_timeout,conn->stations[i]->curr_inst->disassembled_text,conn->stations[i]->DestReg);
+                } else if(conn->stations[i]->type==1){
+                    SIM_LOG_INFO(1, obj, 0, "Station SUM decremented timeout to %x , %s ,%s \n", conn->stations[i]->current_timeout,conn->stations[i]->curr_inst->disassembled_text,conn->stations[i]->DestReg);
+                }
+                else if(conn->stations[i]->type==2){
+                    SIM_LOG_INFO(1, obj, 0, "Station MUL decremented timeout to %x , %s ,%s \n", conn->stations[i]->current_timeout,conn->stations[i]->curr_inst->disassembled_text,conn->stations[i]->DestReg);
                 
-            }   
-            else if(conn->stations[i]->type==2){
-                SIM_LOG_INFO(1, obj, 0, "Station MUL decremented timeout to %x , %i, %x\n", conn->stations[i]->current_timeout,i,conn->stations[i]->curr_inst);
-                
-            }   
-            else if(conn->stations[i]->type==3){
-                SIM_LOG_INFO(1, obj, 0, "Station DIV decremented timeout to %x , %i, %x\n", conn->stations[i]->current_timeout,i,conn->stations[i]->curr_inst);
+                }   
+                else if(conn->stations[i]->type==3){
+                    SIM_LOG_INFO(1, obj, 0, "Station DIV decremented timeout to %x , %s ,%s \n", conn->stations[i]->current_timeout,conn->stations[i]->curr_inst->disassembled_text,conn->stations[i]->DestReg);
+                    
+                }
+                else if(conn->stations[i]->type==4){
+                    SIM_LOG_INFO(1, obj, 0, "Station ALL decremented timeout to %x , %s ,%s \n", conn->stations[i]->current_timeout,conn->stations[i]->curr_inst->disassembled_text,conn->stations[i]->DestReg);
+                }
+            }else{
+                --conn->stations[i]->risk_timeout;
+                if(conn->stations[i]->type==0){
+                    SIM_LOG_INFO(1, obj, 0, "Station LOAD has data risk it's missing %x cicles\n", conn->stations[i]->risk_timeout);
+                } else if(conn->stations[i]->type==1){
+                    SIM_LOG_INFO(1, obj, 0, "Station SUM has data risk it's missing %x cicles\n", conn->stations[i]->risk_timeout);
+                }
+                else if(conn->stations[i]->type==2){
+                    SIM_LOG_INFO(1, obj, 0, "Station MUL has data risk it's missing %x cicles\n", conn->stations[i]->risk_timeout);
+                }
+                else if(conn->stations[i]->type==3){
+                    SIM_LOG_INFO(1, obj, 0, "Station DIV has data risk it's missing %x cicles\n", conn->stations[i]->risk_timeout);
+                }
                 
             }
-            else if(conn->stations[i]->type==4){
-                SIM_LOG_INFO(1, obj, 0, "Station ALL decremented timeout to %x , %i, %x\n", conn->stations[i]->current_timeout,i,conn->stations[i]->curr_inst);
-                
-            }   
         }
     }
 }
@@ -391,8 +470,10 @@ void print_all_ordered_instructions(conf_object_t * obj){
     connection_t *conn = conn_of_obj(obj);
     SIM_LOG_INFO(3, obj, 0,"--- Trace of all finished instructions:");
     for(int i = 0; i< conn->finished_instructions_size; ++i){
-        
-        SIM_LOG_INFO(3, obj, 0,"Physical Address: 0x%x Dissasembly: %s", (int) conn->finished_instructions[i]->address, conn->finished_instructions[i]->disassembled_text);
+        if(i > 350){
+            SIM_LOG_INFO(3, obj, 0,"Physical Address: 0x%x Dissasembly: %s", (int) conn->finished_instructions[i]->address, conn->finished_instructions[i]->disassembled_text);
+ 
+        }
         
         
     }
@@ -578,7 +659,7 @@ void init_all_stations(conf_object_t * obj){
     }
     else{
 
-        
+
         //Unidades ALL
         unit_functional_station * new_station0 =  MM_ZALLOC(1, unit_functional_station);
         new_station0->type = TYPE_ALL;
