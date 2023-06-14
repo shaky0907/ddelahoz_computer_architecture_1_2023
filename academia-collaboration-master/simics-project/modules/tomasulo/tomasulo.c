@@ -22,7 +22,7 @@
 #include <simics/model-iface/processor-info.h>
 #include <simics/simulator-api.h>
 #define MAX_INST 1500
-#define MAX_STATIONS 28
+#define MAX_STATIONS 100
 #define TYPE_LOAD 0
 #define TYPE_SUM 1
 #define TYPE_MUL 2
