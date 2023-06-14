@@ -1,0 +1,27 @@
+[INFO]  - Loaded window, loading webpage... 
+[INFO]  - Current execution mode: production 
+[INFO]  - Loading the layout file - /home/david/Documents/GitHub/ddelahoz_computer_architecture_1_2023/academia-collaboration-master/simics-project/logs/config_machine0.pvf_dsb 
+[INFO]  - Loaded the layout file. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - CSVConnector CSV connector connected. 
+[INFO]  - PVFChart Registered the connector. 
+[INFO]  - PVFChart Initialized the chart - key: a. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Registered the connector. 
+[INFO]  - PVFChart Initialized the chart - key: b. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Registered the connector. 
+[INFO]  - PVFChart Initialized the chart - key: c. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Connected the connector, start rendering. 
+[INFO]  - PVFChart Registered the connector. 
+[INFO]  - PVFChart Initialized the chart - key: d. 
+[INFO]  - CSVConnector Stream monitor: monitoring pvf-stream://stream-host/file?path=/home/david/Documents/GitHub/ddelahoz_computer_architecture_1_2023/academia-collaboration-master/simics-project/logs/sim_result/tracer0.csv. 
+[ERROR] - Cannot read global profile file. {"errno":-2,"syscall":"open","code":"ENOENT","path":"/home/david/.viewer/profiles.json"}
+[ERROR] - worker: Uncaught TypeError: h.handleMetaData is not a function 
+[INFO]  - Exiting the pvf... 

@@ -5,4 +5,4 @@ start:
     mov ebx, 6
     add ebx,eax
     add eax,ebx
-    add ecx,eax
+    

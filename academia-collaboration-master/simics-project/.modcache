@@ -7,7 +7,7 @@ file 18816 1686526155 pci-capture-comp.so
 cap VER:5000;BLD:0;BLD_NS:__simics_project__;BUILDDATE:1686526155;MOD:pci-capture-comp;ABI:6218;API:6;PY_VERSION:0;PY_MINOR_VERSION:0;HOSTTYPE:linux64;CLS:pci_capture_comp;COMP:pci_capture_comp;MODULE_LOAD;THREADSAFE;
 file 1625368 1686526162 pci-data-capture.so
 cap VER:5000;BLD:0;BLD_NS:__simics_project__;BUILDDATE:1686526155;MOD:pci-data-capture;ABI:6218;API:6;PY_VERSION:0;PY_MINOR_VERSION:0;HOSTTYPE:linux64;CLS:pci_data_capture;MODULE_LOAD;THREADSAFE;
-file 69992 1686619607 tomasulo.so
+file 89184 1686723248 tomasulo.so
 cap VER:5000;BLD:0;BLD_NS:__simics_project__;BUILDDATE:1686526162;MOD:tomasulo;ABI:6218;API:6;PY_VERSION:0;PY_MINOR_VERSION:0;HOSTTYPE:linux64;CLS:tomasulo;CLS:tomasulo_connection_t;MODULE_LOAD;SIMICS_START;THREADSAFE;
 dir /home/david/Documents/SIMICSS/simicsinstall/simics-6.0.166/../simics-crypto-engine-6.0.1/linux64/lib
 file 875160 1676590370 crypto-engine.so
