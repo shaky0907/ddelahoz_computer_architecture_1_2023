@@ -5,5 +5,5 @@ start:
     mov bx, 6
     add bx, ax
     add ax, bx
-    mul bx
+    mov bx
     
